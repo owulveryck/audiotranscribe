@@ -23,8 +23,8 @@ A Go-based audio transcription tool that uses Google Cloud Platform's Vertex AI 
 
 1. Clone and build:
    ```bash
-   git clone <repository-url>
-   cd audiotranscribe2
+   git clone https://github.com/owulveryck/audiotranscribe.git
+   cd audiotranscribe
    go build -o audiotranscribe .
    ```
 
