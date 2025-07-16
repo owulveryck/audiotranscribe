@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:cloud.google.com)",
+      "WebFetch(domain:pkg.go.dev)",
+      "Bash(go doc:*)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(go build:*)",
+      "Bash(./audiotranscribe:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": []
+  }
+}
