@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -53,6 +54,7 @@ func main() {
 
 	// Determine the output writer.
 	var outputWriter io.Writer = os.Stdout
+	var bufWriter *bufio.Writer
 	if *outputFile != "" {
 		f, err := os.Create(*outputFile)
 		if err != nil {
@@ -60,29 +62,39 @@ func main() {
 			os.Exit(1)
 		}
 		defer f.Close()
-		outputWriter = f
+		bufWriter = bufio.NewWriter(f)
+		outputWriter = bufWriter
+		defer bufWriter.Flush()
 	}
 
 	// Transcribe all audio files using Vertex AI.
 	logger.Info("transcribing audio files", "count", len(filePaths))
 	var allTranscripts []string
-	
+
 	for i, audioFilePath := range filePaths {
 		logger.Info("transcribing audio file", "file", audioFilePath, "progress", fmt.Sprintf("%d/%d", i+1, len(filePaths)))
-		
+
 		transcript, err := transcribeAudio(outputWriter, config.GCPProject, config.GCPRegion, config.GeminiModel, audioFilePath)
 		if err != nil {
 			logger.Error("failed to transcribe audio file", "file", audioFilePath, "error", err)
 			os.Exit(1)
 		}
-		
+
+		// Flush after each transcript to ensure it's written to file
+		if bufWriter != nil {
+			if err := bufWriter.Flush(); err != nil {
+				logger.Error("failed to flush output", "error", err)
+				os.Exit(1)
+			}
+		}
+
 		allTranscripts = append(allTranscripts, transcript)
 		logger.Info("audio file transcribed successfully", "file", audioFilePath)
 	}
 
 	// Combine all transcripts
 	combinedTranscript := strings.Join(allTranscripts, "\n\n---\n\n")
-	
+
 	err = postProcess(combinedTranscript, outputWriter, config.GCPProject, config.GCPRegion, config.GeminiModel)
 	if err != nil {
 		logger.Error("failed to do the post-processing", "error", err)
