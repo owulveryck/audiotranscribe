@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -80,8 +81,26 @@ func transcribeAudio(w io.Writer, projectID, location, modelName, audioFilePath 
 	}
 	logger.Info("Usage Metadata", "Prompt Token", res.UsageMetadata.PromptTokenCount, "Candidates Token", res.UsageMetadata.CandidatesTokenCount, "Total Token", res.UsageMetadata.TotalTokenCount)
 	logger.Info("Finish", "Finished Reason", res.Candidates[0].FinishReason, "Finish Message", res.Candidates[0].FinishMessage)
+	logger.Info("Response parts", "num_parts", len(res.Candidates[0].Content.Parts), "part_type", fmt.Sprintf("%T", res.Candidates[0].Content.Parts[0]))
 
 	transcriptText := string(res.Candidates[0].Content.Parts[0].(genai.Text))
-	fmt.Fprintf(w, "Generated transcript for %s:\n%s\n\n", audioFilePath, transcriptText)
+	logger.Info("Transcript length", "length", len(transcriptText), "file", audioFilePath)
+
+	// Check if transcript is empty
+	if len(transcriptText) == 0 {
+		logger.Warn("received empty transcript from Gemini", "file", audioFilePath)
+	}
+
+	if _, err := fmt.Fprintf(w, "Generated transcript for %s:\n%s\n\n", audioFilePath, transcriptText); err != nil {
+		return "", fmt.Errorf("failed to write transcript: %w", err)
+	}
+
+	// Flush the buffer if the writer is a buffered writer
+	if bw, ok := w.(*bufio.Writer); ok {
+		if err := bw.Flush(); err != nil {
+			return "", fmt.Errorf("failed to flush output: %w", err)
+		}
+	}
+
 	return transcriptText, nil
 }
