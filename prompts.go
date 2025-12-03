@@ -16,7 +16,9 @@ const (
 Provide a clean, readable transcript without timestamps.`
 
 	// SummaryPrompt is the prompt used for post-processing and summarization
-	SummaryPrompt = `Create a comprehensive summary of these interview transcripts. Follow these guidelines:
+	SummaryPrompt = `The context is about designing a new eCommerce platform.
+
+	Create a comprehensive summary of these interview transcripts. Follow these guidelines:
 
 1. Extract the main ideas, key insights, and solutions discussed
 2. Structure the output using markdown formatting
